@@ -1,0 +1,140 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  config:
+    import: "optional:configserver:http://config-admin:config-secret-2024@localhost:8888"
+
+  # ── Redis for rate limiting ─────────────────────
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: oms_redis_pass
+
+  # ── Gateway routes ──────────────────────────────
+  cloud:
+    gateway:
+      # Global CORS config
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"   # React admin panel
+              - "http://localhost:5173"   # Vite dev server
+            allowedMethods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+            allowedHeaders: ["*"]
+            allowCredentials: true
+
+      # Default filters applied to ALL routes
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 100
+            redis-rate-limiter.burstCapacity: 200
+            redis-rate-limiter.requestedTokens: 1
+
+      routes:
+        # ── Order Service ─────────────────────────
+        - id: order-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - JwtAuthFilter
+            - name: CircuitBreaker
+              args:
+                name: order-service-cb
+                fallbackUri: forward:/fallback/order-service
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY, SERVICE_UNAVAILABLE
+                methods: GET
+                backoff:
+                  firstBackoff: 50ms
+                  maxBackoff: 500ms
+                  factor: 2
+
+        # ── Inventory Service ─────────────────────
+        - id: inventory-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/inventory/**
+          filters:
+            - JwtAuthFilter
+            - name: CircuitBreaker
+              args:
+                name: inventory-service-cb
+                fallbackUri: forward:/fallback/inventory-service
+
+        # ── Fulfillment Service ───────────────────
+        - id: fulfillment-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/fulfillment/**
+          filters:
+            - JwtAuthFilter
+            - name: CircuitBreaker
+              args:
+                name: fulfillment-service-cb
+                fallbackUri: forward:/fallback/fulfillment-service
+
+        # ── Payment Service ───────────────────────
+        - id: payment-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/payments/**
+          filters:
+            - JwtAuthFilter
+            - name: CircuitBreaker
+              args:
+                name: payment-service-cb
+                fallbackUri: forward:/fallback/payment-service
+
+        # ── Notification Service ──────────────────
+        - id: notification-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - JwtAuthFilter
+
+        # ── IoT Gateway ───────────────────────────
+        - id: iot-gateway
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/iot/**
+          filters:
+            - JwtAuthFilter
+
+        # ── Auth endpoint — NO JWT filter ─────────
+        - id: auth-open
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/auth/**
+
+# JWT config
+jwt:
+  secret: "oms-super-secret-key-2024-change-in-production-must-be-256-bits"
+  expiration: 86400000   # 24h in ms
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,metrics
+  endpoint:
+    gateway:
+      enabled: true
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.oms.gateway: DEBUG

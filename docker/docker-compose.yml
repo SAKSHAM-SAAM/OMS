@@ -1,0 +1,231 @@
+version: '3.9'
+
+# ─────────────────────────────────────────────
+#  OMS Infrastructure — Phase 1
+#  Services: Kafka, Zookeeper, 6x PostgreSQL,
+#            Redis, pgAdmin, Kafka UI
+# ─────────────────────────────────────────────
+
+networks:
+  oms-network:
+    driver: bridge
+
+volumes:
+  zookeeper_data:
+  kafka_data:
+  redis_data:
+  pgadmin_data:
+  postgres_order:
+  postgres_inventory:
+  postgres_fulfillment:
+  postgres_payment:
+  postgres_notification:
+  postgres_iot:
+
+services:
+
+  # ── Zookeeper ────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: oms-zookeeper
+    networks: [oms-network]
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Kafka ────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: oms-kafka
+    networks: [oms-network]
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"       # external access (your app / Postman)
+      - "29092:29092"     # internal Docker network
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  # ── Kafka UI (browse topics visually) ────────
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: oms-kafka-ui
+    networks: [oms-network]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: oms-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
+  # ── Redis (caching layer) ─────────────────────
+  redis:
+    image: redis:7.2-alpine
+    container_name: oms-redis
+    networks: [oms-network]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass oms_redis_pass
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "oms_redis_pass", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── PostgreSQL: Order Service ─────────────────
+  postgres-order:
+    image: postgres:15-alpine
+    container_name: oms-postgres-order
+    networks: [oms-network]
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: orders_db
+      POSTGRES_USER: oms_user
+      POSTGRES_PASSWORD: oms_pass
+    volumes:
+      - postgres_order:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oms_user -d orders_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── PostgreSQL: Inventory Service ─────────────
+  postgres-inventory:
+    image: postgres:15-alpine
+    container_name: oms-postgres-inventory
+    networks: [oms-network]
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: inventory_db
+      POSTGRES_USER: oms_user
+      POSTGRES_PASSWORD: oms_pass
+    volumes:
+      - postgres_inventory:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oms_user -d inventory_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── PostgreSQL: Fulfillment Service ───────────
+  postgres-fulfillment:
+    image: postgres:15-alpine
+    container_name: oms-postgres-fulfillment
+    networks: [oms-network]
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: fulfillment_db
+      POSTGRES_USER: oms_user
+      POSTGRES_PASSWORD: oms_pass
+    volumes:
+      - postgres_fulfillment:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oms_user -d fulfillment_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── PostgreSQL: Payment Service ───────────────
+  postgres-payment:
+    image: postgres:15-alpine
+    container_name: oms-postgres-payment
+    networks: [oms-network]
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_DB: payments_db
+      POSTGRES_USER: oms_user
+      POSTGRES_PASSWORD: oms_pass
+    volumes:
+      - postgres_payment:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oms_user -d payments_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── PostgreSQL: Notification Service ──────────
+  postgres-notification:
+    image: postgres:15-alpine
+    container_name: oms-postgres-notification
+    networks: [oms-network]
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_DB: notifications_db
+      POSTGRES_USER: oms_user
+      POSTGRES_PASSWORD: oms_pass
+    volumes:
+      - postgres_notification:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oms_user -d notifications_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── PostgreSQL: IoT Gateway ───────────────────
+  postgres-iot:
+    image: postgres:15-alpine
+    container_name: oms-postgres-iot
+    networks: [oms-network]
+    ports:
+      - "5437:5432"
+    environment:
+      POSTGRES_DB: iot_db
+      POSTGRES_USER: oms_user
+      POSTGRES_PASSWORD: oms_pass
+    volumes:
+      - postgres_iot:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oms_user -d iot_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── pgAdmin (visual DB browser) ───────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: oms-pgadmin
+    networks: [oms-network]
+    depends_on:
+      - postgres-order
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@oms.dev
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
