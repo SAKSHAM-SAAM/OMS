@@ -1,0 +1,23 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/orders_db
+    username: oms_user
+    password: oms_pass
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+kafka:
+  consumer:
+    group-id: order-service-group
+  topics:
+    order-created: order.created
+    order-updated: order.updated
+    order-cancelled: order.cancelled
