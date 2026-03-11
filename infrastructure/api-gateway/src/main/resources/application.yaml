@@ -1,0 +1,72 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: oms_redis_pass
+  cloud:
+    config:
+      uri: http://localhost:8888
+      username: config-admin
+      password: config-secret-2024
+      fail-fast: false
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://localhost:5173"
+            allowedMethods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+            allowedHeaders: ["*"]
+            allowCredentials: true
+      routes:
+        - id: order-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/orders/**
+        - id: inventory-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/inventory/**
+        - id: fulfillment-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/fulfillment/**
+        - id: payment-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/payments/**
+        - id: notification-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/notifications/**
+        - id: iot-gateway
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/iot/**
+
+jwt:
+  secret: "oms-super-secret-key-2024-change-in-production-must-be-256-bits"
+  expiration: 86400000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,metrics
+  endpoint:
+    gateway:
+      enabled: true
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.oms: DEBUG
