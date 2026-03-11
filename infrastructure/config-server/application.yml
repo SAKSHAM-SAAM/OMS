@@ -1,0 +1,35 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        native:
+          # Using native filesystem profile (no Git needed for local dev)
+          # Switch to git: uri: https://github.com/YOUR_ORG/oms-config for prod
+          search-locations: classpath:/config
+  profiles:
+    active: native
+
+  # Basic auth to protect config endpoints
+  security:
+    user:
+      name: config-admin
+      password: config-secret-2024
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,refresh
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.oms: DEBUG
+    org.springframework.cloud.config: INFO
