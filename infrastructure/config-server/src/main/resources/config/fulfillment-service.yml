@@ -1,0 +1,23 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: fulfillment-service
+  datasource:
+    url: jdbc:postgresql://localhost:5434/fulfillment_db
+    username: oms_user
+    password: oms_pass
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+kafka:
+  consumer:
+    group-id: fulfillment-service-group
+  topics:
+    shipment-created: shipment.created
+    shipment-dispatched: shipment.dispatched
+    shipment-delivered: shipment.delivered

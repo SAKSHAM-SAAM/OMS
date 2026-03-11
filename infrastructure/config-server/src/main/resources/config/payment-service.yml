@@ -1,0 +1,23 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: payment-service
+  datasource:
+    url: jdbc:postgresql://localhost:5435/payments_db
+    username: oms_user
+    password: oms_pass
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+kafka:
+  consumer:
+    group-id: payment-service-group
+  topics:
+    payment-captured: payment.captured
+    payment-refunded: payment.refunded
+    payment-failed: payment.failed
