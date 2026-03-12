@@ -1,4 +1,4 @@
-package main.java.com.oms.order_service.exception;
+package com.oms.order_service.exception;
 
 public class OrderNotFoundException extends RuntimeException {
     public OrderNotFoundException(String orderReference) {

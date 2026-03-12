@@ -1,4 +1,4 @@
-package main.java.com.oms.order_service.domain.enums;
+package com.oms.order_service.domain.enums;
 /// All possible status 
 public enum OrderStatus{
     PENDING,              // Order received, awaiting payment

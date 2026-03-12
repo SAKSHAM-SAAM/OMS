@@ -1,7 +1,7 @@
-package main.java.com.oms.order_service.domain.repository;
+package com.oms.order_service.domain.repository;
 
-import com.oms.orderservice.domain.entity.Order;
-import com.oms.orderservice.domain.enums.OrderStatus;
+import com.oms.order_service.domain.entity.Order;
+import com.oms.order_service.domain.enums.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

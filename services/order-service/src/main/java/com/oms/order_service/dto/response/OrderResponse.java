@@ -1,6 +1,6 @@
-package main.java.com.oms.order_service.dto.response;
+package com.oms.order_service.dto.response;
 
-import com.oms.orderservice.domain.enums.OrderStatus;
+import com.oms.order_service.domain.enums.OrderStatus;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

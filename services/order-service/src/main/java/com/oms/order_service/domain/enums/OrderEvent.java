@@ -1,4 +1,4 @@
-package main.java.com.oms.order_service.domain.enums;
+package com.oms.order_service.domain.enums;
 
 public enum OrderEvent {
     CAPTURE_PAYMENT,

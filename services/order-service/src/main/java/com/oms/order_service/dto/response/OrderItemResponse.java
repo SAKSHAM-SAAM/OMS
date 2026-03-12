@@ -1,4 +1,4 @@
-package main.java.com.oms.order_service.dto.response;
+package com.oms.order_service.dto.response;
 
 import lombok.*;
 import java.math.BigDecimal;

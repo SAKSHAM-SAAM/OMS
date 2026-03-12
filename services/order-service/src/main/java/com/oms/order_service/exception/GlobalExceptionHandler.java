@@ -1,4 +1,4 @@
-package main.java.com.oms.order_service.exception;
+package com.oms.order_service.exception;
 
 import org.springframework.http.*;
 import org.springframework.validation.FieldError;

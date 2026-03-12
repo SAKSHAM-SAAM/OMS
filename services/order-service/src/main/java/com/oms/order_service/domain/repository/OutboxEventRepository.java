@@ -1,6 +1,6 @@
-package main.java.com.oms.order_service.domain.repository;
+package com.oms.order_service.domain.repository;
 
-import com.oms.orderservice.domain.entity.OutboxEvent;
+import com.oms.order_service.domain.entity.OutboxEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

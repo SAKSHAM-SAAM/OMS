@@ -1,6 +1,6 @@
-package main.java.com.oms.order_service.domain.entity;
+package com.oms.order_service.domain.entity;
 
-import com.oms.orderservice.domain.enums.OrderStatus;
+import com.oms.order_service.domain.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

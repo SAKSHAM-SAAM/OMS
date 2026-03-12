@@ -1,4 +1,4 @@
-package main.java.com.oms.order_service.domain.entity;
+package com.oms.order_service.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

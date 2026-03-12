@@ -1,4 +1,4 @@
-package main.java.com.oms.order_service.dto.request;
+package com.oms.order_service.dto.request;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
