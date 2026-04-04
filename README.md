@@ -96,8 +96,8 @@ curl http://localhost:8080/actuator/health
 ## Project Phases
 
 - [x] Phase 1 — Infrastructure (Docker + Config Server + API Gateway)
-- [ ] Phase 2 — Order Service (State Machine + Kafka Producer)
-- [ ] Phase 3 — Inventory Service
+- [x] Phase 2 — Order Service (State Machine + Kafka Producer)
+- [-] Phase 3 — Inventory Service (IN PROGRESS)
 - [ ] Phase 4 — Fulfillment Service
 - [ ] Phase 5 — Payment Service + Saga
 - [ ] Phase 6 — Notification Service

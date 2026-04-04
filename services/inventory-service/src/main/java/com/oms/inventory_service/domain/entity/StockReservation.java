@@ -22,7 +22,7 @@ public class StockReservation {
     @Column(nullable = false)
     private String orderReference;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String sku;
 
     @Column(nullable = false)
